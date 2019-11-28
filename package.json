@@ -1,0 +1,21 @@
+{
+  "name": "akamai-deobfuscator",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start": "node -r esm index.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@babel/generator": "^7.7.4",
+    "@babel/parser": "^7.7.4",
+    "@babel/traverse": "^7.7.4",
+    "@babel/types": "^7.7.4",
+    "axios": "^0.19.0",
+    "esm": "^3.2.25",
+    "js-beautify": "^1.10.2"
+  }
+}
