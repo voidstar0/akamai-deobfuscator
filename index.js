@@ -87,6 +87,6 @@ function writeCodeToFile(code) {
 
 // Fetch the Akamai URL from the arguments
 // or use AMD's Akamai script as a default.
-fetchAkamaiScript(process.argv[2] || 'https://www.amd.com/akam/11/796a466f')
+fetchAkamaiScript(process.argv[2] || 'https://www.amd.com/akam/11/796a4075')
     .then(src => deobfuscate(src))
     .catch(e => console.log(e));
