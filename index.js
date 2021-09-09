@@ -43,8 +43,16 @@ function deobfuscate(source) {
         },
         UnaryExpression(path) {
             // Replace void 0 with undefined
-            if(path.node.operator === 'void' && path.node.argument.type === 'NumericLiteral') {
+            if (path.node.operator === 'void' && path.node.argument.type === 'NumericLiteral') {
                 path.replaceWith(t.identifier("undefined"));
+            }
+
+            if (path.node.operator === '!' && path.node.argument.type === 'NumericLiteral') {
+                if (path.node.argument.value === 0) {
+                    path.replaceWith(t.booleanLiteral(true));
+                } else {
+                    path.replaceWith(t.booleanLiteral(false));
+                }
             }
         },
         VariableDeclaration(path) {
@@ -98,6 +106,18 @@ function deobfuscate(source) {
 
             path.replaceWithMultiple(path.node.expressions);
             path.skip();
+        },
+        BinaryExpression(path) {
+            if(path.node.left.type === 'Identifier') {
+                if(path.node.left.name === 'undefined') {
+                    path.replaceWith(t.binaryExpression(path.node.operator, path.node.right, path.node.left));
+                }
+            }
+
+            if(t.isLiteral(path.node.left)) {
+                path.replaceWith(t.binaryExpression(path.node.operator, path.node.right, path.node.left));
+            }
+
         }
     });
 
