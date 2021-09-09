@@ -20,6 +20,71 @@ function deobfuscate(source) {
     let stringArrName = undefined;
 
     traverse(ast, {
+        /*
+            Unroll sequence statements into individual statements.
+            Akamai's obfuscation litters this pattern all over their codebase.
+            e.g: b.innerHTML = "abcdefhijklmnopqrstuvxyz1234567890;+-.", b.style.fontSize = "90px", b.style.fontFamily = o[c]
+
+            This transformation will turn it into:
+            b.innerHTML = "abcdefhijklmnopqrstuvxyz1234567890;+-."
+            b.style.fontSize = "90px"
+            b.style.fontFamily = o[c]
+        */
+        SequenceExpression(path) {
+            if (path.parent && !t.isExpressionStatement(path.parent)) {
+                return;
+            }
+
+            path.parentPath.replaceWithMultiple(path.node.expressions.map(e => t.expressionStatement(e)));
+        },
+        /*
+            Akamai tends to flatten if statements into logical expressions.
+            This undoes that transformation.
+
+            e.g: e && e.pageX && e.pageY ? (n = Math.floor(e.pageX), o = Math.floor(e.pageY)) : e && e.clientX && e.clientY && (n = Math.floor(e.clientX), o = Math.floor(e.clientY));
+
+            turns into:
+
+            if (e && e.pageX && e.pageY) {
+                n = Math.floor(e.pageX);
+                o = Math.floor(e.pageY);
+            } else {
+                if (e && e.clientX && e.clientY) {
+                    n = Math.floor(e.clientX);
+                    o = Math.floor(e.clientY);
+                }
+            }
+
+        */
+        LogicalExpression(path) {
+            if (!t.isExpressionStatement(path.parent)) {
+                return;
+            }
+            if(path.node.right.type === 'SequenceExpression' 
+                || path.node.right.type === 'AssignmentExpression' 
+                || path.node.right.type === 'CallExpression') {
+                path.parentPath.replaceWith(t.ifStatement(path.node.left, t.blockStatement([t.expressionStatement(path.node.right)]), null));
+            }
+        },
+        /*
+            Akamai uses void 0 to mean undefined sometimes.
+            They also use !0 as true and !1 as false.
+
+            This transforms them back into their respective meaning.
+        */
+        UnaryExpression(path) {
+            if (path.node.operator === 'void' && path.node.argument.type === 'NumericLiteral') {
+                path.replaceWith(t.identifier("undefined"));
+            }
+
+            if (path.node.operator === '!' && path.node.argument.type === 'NumericLiteral') {
+                if (path.node.argument.value === 0) {
+                    path.replaceWith(t.booleanLiteral(true));
+                } else {
+                    path.replaceWith(t.booleanLiteral(false));
+                }
+            }
+        },
         VariableDeclaration(path) {
             // Find the variable that holds all the function
             // and property names by finding the first array
@@ -62,6 +127,92 @@ function deobfuscate(source) {
             }
         }
     })
+
+    traverse(ast, {
+        /*
+            Make sure literals and undefined identifier is on the right in a binary expression.
+            undefined == a turns into a == undefined
+            0 == b turns into b == 0
+        */
+        BinaryExpression(path) {
+            if(path.node.left.type === 'Identifier') {
+                if(path.node.left.name === 'undefined') {
+                    path.replaceWith(t.binaryExpression(path.node.operator, path.node.right, path.node.left));
+                }
+            }
+
+            if(t.isLiteral(path.node.left)) {
+                path.replaceWith(t.binaryExpression(path.node.operator, path.node.right, path.node.left));
+            }
+        },
+        /*
+            Akamai sometimes defines multiple variables with one var keyword.
+            This gives them their own declaration.
+
+            e.g:
+            var bm_url = bm_script.src, url_split = bm_url.split("/"), obfus_state_field;
+
+            turns into:
+            var bm_url = bm_script.src;
+            var url_split = bm_url.split("/");
+            var obfus_state_field;
+        */
+        VariableDeclaration(path) {
+            if (path.node.declarations.length > 1) {
+                path.replaceWithMultiple(path.node.declarations.map(d => t.variableDeclaration("var", [d])));
+            }
+        },
+        ConditionalExpression(path) {
+            if (t.isAssignmentExpression(path.parent) || t.isReturnStatement(path.parent)) {
+                return;
+            }
+
+            if(!t.isExpressionStatement(path.parent)) {
+                return;
+            }
+
+            path.parentPath.replaceWith(t.ifStatement(path.node.test, t.blockStatement([t.expressionStatement(path.node.consequent)]), t.blockStatement([t.expressionStatement(path.node.alternate)])));
+            path.parentPath.skip();
+        }
+    });
+
+    traverse(ast, {
+        LogicalExpression(path) {
+            if (!t.isExpressionStatement(path.parent)) {
+                return;
+            }
+            if(path.node.right.type === 'SequenceExpression' 
+                || path.node.right.type === 'AssignmentExpression' 
+                || path.node.right.type === 'CallExpression') {
+                path.parentPath.replaceWith(t.ifStatement(path.node.left, t.blockStatement([t.expressionStatement(path.node.right)]), null));
+            }
+        }
+    });
+
+    traverse(ast, {
+        SequenceExpression(path) {
+            if (path.parent && !t.isExpressionStatement(path.parent)) {
+                return;
+            }
+
+            path.parentPath.replaceWithMultiple(path.node.expressions.map(e => t.expressionStatement(e)));
+        },
+        UnaryExpression(path) {
+            if (path.node.operator === 'void' && path.node.argument.type === 'NumericLiteral') {
+                path.replaceWith(t.identifier("undefined"));
+            }
+
+            if (path.node.operator === '!' && path.node.argument.type === 'NumericLiteral') {
+                if (path.node.argument.value === 0) {
+                    path.replaceWith(t.booleanLiteral(true));
+                } else {
+                    path.replaceWith(t.booleanLiteral(false));
+                }
+            }
+        },
+    });
+
+    
 
     // Generate the new code given our modifications to the AST
     // and beautify it to recover any indentation that may have
