@@ -196,7 +196,20 @@ function deobfuscate(source) {
             }
 
             path.parentPath.replaceWithMultiple(path.node.expressions.map(e => t.expressionStatement(e)));
-        }
+        },
+        UnaryExpression(path) {
+            if (path.node.operator === 'void' && path.node.argument.type === 'NumericLiteral') {
+                path.replaceWith(t.identifier("undefined"));
+            }
+
+            if (path.node.operator === '!' && path.node.argument.type === 'NumericLiteral') {
+                if (path.node.argument.value === 0) {
+                    path.replaceWith(t.booleanLiteral(true));
+                } else {
+                    path.replaceWith(t.booleanLiteral(false));
+                }
+            }
+        },
     });
 
     
