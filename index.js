@@ -20,6 +20,24 @@ function deobfuscate(source) {
     let stringArrName = undefined;
 
     traverse(ast, {
+        SequenceExpression(path) {
+            if (path.parent.type === 'ReturnStatement') {
+                return;
+            }
+
+            path.replaceWithMultiple(path.node.expressions);
+            path.skip();
+        },
+        LogicalExpression(path) {
+            if (path.parent.type === 'ReturnStatement') {
+                return;
+            }
+            if(path.node.right.type === 'SequenceExpression' || path.node.right.type === 'AssignmentExpression') {
+                console.log("Called");
+                console.log(generate(path.node, {}, source).code);
+                path.parentPath.replaceWith(t.ifStatement(path.node.left, t.blockStatement([t.expressionStatement(path.node.right)]), null));
+            }
+        },
         VariableDeclaration(path) {
             // Find the variable that holds all the function
             // and property names by finding the first array
