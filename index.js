@@ -117,7 +117,11 @@ function deobfuscate(source) {
             if(t.isLiteral(path.node.left)) {
                 path.replaceWith(t.binaryExpression(path.node.operator, path.node.right, path.node.left));
             }
-
+        },
+        VariableDeclaration(path) {
+            if (path.node.declarations.length > 1) {
+                path.replaceWithMultiple(path.node.declarations.map(d => t.variableDeclaration("var", [d])));
+            }
         }
     });
 
