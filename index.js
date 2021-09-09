@@ -27,15 +27,24 @@ function deobfuscate(source) {
 
             path.replaceWithMultiple(path.node.expressions);
             path.skip();
-        },
+        }
+    });
+
+    traverse(ast, {
         LogicalExpression(path) {
             if (path.parent.type === 'ReturnStatement') {
                 return;
             }
             if(path.node.right.type === 'SequenceExpression' || path.node.right.type === 'AssignmentExpression') {
-                console.log("Called");
-                console.log(generate(path.node, {}, source).code);
+                // console.log("Called");
+                // console.log(generate(path.node, {}, source).code);
                 path.parentPath.replaceWith(t.ifStatement(path.node.left, t.blockStatement([t.expressionStatement(path.node.right)]), null));
+            }
+        },
+        UnaryExpression(path) {
+            // Replace void 0 with undefined
+            if(path.node.operator === 'void' && path.node.argument.type === 'NumericLiteral') {
+                path.replaceWith(t.identifier("undefined"));
             }
         },
         VariableDeclaration(path) {
@@ -80,6 +89,17 @@ function deobfuscate(source) {
             }
         }
     })
+
+    traverse(ast, {
+        SequenceExpression(path) {
+            if (path.parent.type === 'ReturnStatement') {
+                return;
+            }
+
+            path.replaceWithMultiple(path.node.expressions);
+            path.skip();
+        }
+    });
 
     // Generate the new code given our modifications to the AST
     // and beautify it to recover any indentation that may have
