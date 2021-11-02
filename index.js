@@ -3,8 +3,8 @@ import * as t from '@babel/types';
 import traverse from '@babel/traverse';
 import generate from '@babel/generator';
 import beautify from 'js-beautify';
-import { get } from 'axios';
-import { writeFile, existsSync, mkdirSync } from 'fs';
+import {get} from 'axios';
+import {existsSync, mkdirSync, writeFile} from 'fs';
 
 async function fetchAkamaiScript(url) {
     const res = await get(url);
@@ -60,8 +60,8 @@ function deobfuscate(source) {
             if (!t.isExpressionStatement(path.parent)) {
                 return;
             }
-            if(path.node.right.type === 'SequenceExpression' 
-                || path.node.right.type === 'AssignmentExpression' 
+            if (path.node.right.type === 'SequenceExpression'
+                || path.node.right.type === 'AssignmentExpression'
                 || path.node.right.type === 'CallExpression') {
                 path.parentPath.replaceWith(t.ifStatement(path.node.left, t.blockStatement([t.expressionStatement(path.node.right)]), null));
             }
@@ -91,7 +91,7 @@ function deobfuscate(source) {
             // of strings. This is used as a lookup table by
             // Akamai.
             const functionNameMap = path.node.declarations.find(d => d.init && d.init.type === 'ArrayExpression' && d.init.elements.every(e => e.type === 'StringLiteral'));
-            if(functionNameMap && !stringArrName) {
+            if (functionNameMap && !stringArrName) {
                 // copy all of the values into a copy of the array
                 // so we can retrieve the proper function names later on
                 stringArrName = functionNameMap.id.name;
@@ -108,7 +108,7 @@ function deobfuscate(source) {
             // lookup table replace it with the value retrieved from the array.
             // e.g. var _ = ["cookie", "activeElement", ...]
             // document[_[1]] -> document["activeElement"]
-            if(path.node.object.name === stringArrName) {
+            if (path.node.object.name === stringArrName) {
                 path.replaceWith(t.stringLiteral(lookupTable[path.node.property.value]));
             }
         }
@@ -122,7 +122,7 @@ function deobfuscate(source) {
     // document["activeElement"] to document.activeElement
     traverse(ast, {
         MemberExpression(path) {
-            if(path.node.property.type === 'StringLiteral' && validIdentifierRegex.test(path.node.property.value)) {
+            if (path.node.property.type === 'StringLiteral' && validIdentifierRegex.test(path.node.property.value)) {
                 path.replaceWith(t.memberExpression(path.node.object, t.identifier(path.node.property.value), false));
             }
         }
@@ -134,17 +134,17 @@ function deobfuscate(source) {
             undefined == a turns into a == undefined
             0 == b turns into b == 0
         */
-        BinaryExpression(path) {
-            if(path.node.left.type === 'Identifier') {
-                if(path.node.left.name === 'undefined') {
-                    path.replaceWith(t.binaryExpression(path.node.operator, path.node.right, path.node.left));
-                }
-            }
-
-            if(t.isLiteral(path.node.left)) {
-                path.replaceWith(t.binaryExpression(path.node.operator, path.node.right, path.node.left));
-            }
-        },
+//        BinaryExpression(path) {
+//            if(path.node.left.type === 'Identifier') {
+//                if(path.node.left.name === 'undefined') {
+//                    path.replaceWith(t.binaryExpression(path.node.operator, path.node.right, path.node.left));
+//                }
+//            }
+//
+//            if(t.isLiteral(path.node.left)) {
+//                path.replaceWith(t.binaryExpression(path.node.operator, path.node.right, path.node.left));
+//            }
+//        },
         /*
             Akamai sometimes defines multiple variables with one var keyword.
             This gives them their own declaration.
@@ -167,7 +167,7 @@ function deobfuscate(source) {
                 return;
             }
 
-            if(!t.isExpressionStatement(path.parent)) {
+            if (!t.isExpressionStatement(path.parent)) {
                 return;
             }
 
@@ -181,8 +181,8 @@ function deobfuscate(source) {
             if (!t.isExpressionStatement(path.parent)) {
                 return;
             }
-            if(path.node.right.type === 'SequenceExpression' 
-                || path.node.right.type === 'AssignmentExpression' 
+            if (path.node.right.type === 'SequenceExpression'
+                || path.node.right.type === 'AssignmentExpression'
                 || path.node.right.type === 'CallExpression') {
                 path.parentPath.replaceWith(t.ifStatement(path.node.left, t.blockStatement([t.expressionStatement(path.node.right)]), null));
             }
@@ -212,23 +212,25 @@ function deobfuscate(source) {
         },
     });
 
-    
 
     // Generate the new code given our modifications to the AST
     // and beautify it to recover any indentation that may have
     // been lost.
     let deobfCode = generate(ast, {}, source).code;
-    deobfCode = beautify(deobfCode, {indent_size: 2, space_in_empty_paren: true});
+    deobfCode = beautify(deobfCode, {
+        indent_size         : 2,
+        space_in_empty_paren: true
+    });
     writeCodeToFile(deobfCode);
 }
 
 function writeCodeToFile(code) {
-    if(!existsSync(__dirname + '/out')) {
+    if (!existsSync(__dirname + '/out')) {
         mkdirSync(__dirname + '/out');
     }
 
     writeFile(__dirname + '/out/output.js', code, (err) => {
-        if(err) {
+        if (err) {
             console.log('Error writing file', err);
         } else {
             console.log('Wrote file to /out/output.js');
