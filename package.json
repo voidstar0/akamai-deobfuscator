@@ -4,7 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "node -r esm index.js"
+    "start": "node -r esm index.js",
+    "test01": "node -r esm test01.js"
   },
   "keywords": [],
   "author": "",

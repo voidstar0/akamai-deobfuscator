@@ -212,6 +212,25 @@ function deobfuscate(source) {
         },
     });
 
+    // cleanup case from test01.js.
+    traverse(ast, {
+        SequenceExpression(path) {
+            if (path.parent && !t.isReturnStatement(path.parent)) {
+                return;
+            }
+            let size = path.node.expressions.length;
+            path.parentPath.replaceWithMultiple(path.node.expressions.map(
+                (e, i) => {
+                    let ne = t.expressionStatement(e);
+                    if (i + 1 === size) {
+                        ne = t.returnStatement(e);
+                    }
+                    return ne;
+                }
+            ));
+        }
+    });
+
 
     // Generate the new code given our modifications to the AST
     // and beautify it to recover any indentation that may have
