@@ -55,12 +55,17 @@ async function _main() {
             if (xfor.init !== path.node) {
                 return;
             }
+            let elx = [];
             for ( let x of path.node.expressions ) {
                 if (x.type !== "Identifier" && x.name !== "undefined") {
-                    path.parentPath.insertBefore(x);
+                    elx.push(x)
                 }
             }
-            path.remove();
+            let last = elx.pop();
+            path.replaceWith(last);
+            for ( let x of elx ) {
+                path.parentPath.insertBefore(x);
+            }
         },
         // clear all empty var statement.
         VariableDeclarator(path) {
