@@ -306,6 +306,9 @@ function deobfuscate(source) {
                         }
 
                         x.callee.id = t.identifier('make_name_' + makeid(8));
+                        elx.push(x.callee);
+                        elx.push(t.callExpression(x.callee.id, x.arguments));
+                        continue;
                     }
                 }
                 elx.push(x)
@@ -317,7 +320,6 @@ function deobfuscate(source) {
             }
         }
     });
-
 
     // Generate the new code given our modifications to the AST
     // and beautify it to recover any indentation that may have

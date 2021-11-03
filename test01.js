@@ -104,6 +104,9 @@ async function _main() {
                         }
 
                         x.callee.id = t.identifier('make_name_' + makeid(8));
+                        elx.push(x.callee);
+                        elx.push(t.callExpression(x.callee.id, x.arguments));
+                        continue;
                     }
                 }
                 elx.push(x)
