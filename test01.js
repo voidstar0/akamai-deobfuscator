@@ -76,6 +76,30 @@ async function _main() {
         }
     });
 
+    traverse(ast, {
+        // from: if (a = null == t ? document.activeElement : t, null == document.activeElement) return -1;
+        // to: a = null == t ? document.activeElement : t
+        // to: if (null == document.activeElement) return -1;
+        SequenceExpression(path) {
+            if (path.parent && !t.isIfStatement(path.parent)) {
+                return;
+            }
+            let xif = path.parent;
+            if (xif.test !== path.node) {
+                return;
+            }
+            let elx = [];
+            for ( let x of path.node.expressions ) {
+                elx.push(x)
+            }
+            let last = elx.pop();
+            path.replaceWith(last);
+            for ( let x of elx ) {
+                path.parentPath.insertBefore(x);
+            }
+        }
+    });
+
     let newSource = generate(ast, {}, source).code;
     newSource = beautify(newSource, {
         indent_size         : 2,

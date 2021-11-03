@@ -57,3 +57,8 @@ function case3() {
         t = t + c + ",";
     }
 }
+
+function case4() {
+    if (a = null == t ? document.activeElement : t, null == document.activeElement) return -1;
+}
+
