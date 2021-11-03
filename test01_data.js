@@ -60,5 +60,9 @@ function case3() {
 
 function case4() {
     if (a = null == t ? document.activeElement : t, null == document.activeElement) return -1;
+    if (function (q) {
+        console.log(q);
+        return 0
+    }(2), true) 100;
 }
 

@@ -90,6 +90,22 @@ async function _main() {
             }
             let elx = [];
             for ( let x of path.node.expressions ) {
+                if (t.isCallExpression(x)) {
+                    if (x.callee.id === null) {
+                        function makeid(length) {
+                            let result = '';
+                            let characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+                            let charactersLength = characters.length;
+                            for ( let i = 0; i < length; i++ ) {
+                                result += characters.charAt(Math.floor(Math.random() *
+                                    charactersLength));
+                            }
+                            return result;
+                        }
+
+                        x.callee.id = t.identifier('make_name_' + makeid(8));
+                    }
+                }
                 elx.push(x)
             }
             let last = elx.pop();
