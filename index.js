@@ -246,6 +246,33 @@ function deobfuscate(source) {
         }
     });
 
+    traverse(ast, {
+        // for (t = "", a = 1e3, e = [JSON.parse], n = 0, undefined; n < e.length; n++) {
+        // move out all for init params before for statement.
+        SequenceExpression(path) {
+            if (path.parent && !t.isForStatement(path.parent)) {
+                return;
+            }
+            let xfor = path.parent;
+            if (xfor.init !== path.node) {
+                return;
+            }
+            for ( let x of path.node.expressions ) {
+                if (x.type !== "Identifier" && x.name !== "undefined") {
+                    path.parentPath.insertBefore(x);
+                }
+            }
+            path.remove();
+        },
+        // clear all empty var statement.
+        VariableDeclarator(path) {
+            if (path.node.init !== null ||
+                path.parentPath.parentPath.node.type !== 'BlockStatement')
+                return;
+            path.parentPath.remove();
+        }
+    });
+
 
     // Generate the new code given our modifications to the AST
     // and beautify it to recover any indentation that may have

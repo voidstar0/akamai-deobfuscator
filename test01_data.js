@@ -24,3 +24,36 @@ function case2() {
         "undefined" == typeof JSON)
         return void (bmak.mr = "undef");
 }
+
+
+function case3() {
+    for ( t = "", a = 1e3, e = [Math.abs, Math.acos, Math.asin, Math.atanh, Math.cbrt, Math.exp, Math.random, Math.round, Math.sqrt, isFinite, isNaN, parseFloat, parseInt, JSON.parse], n = 0, undefined; n < e.length; n++ ) {
+        var t;
+        var a;
+        var e;
+        var n;
+        var o = [];
+        var m = 0;
+        var r = performance.now();
+        var i = 0;
+        var c = 0;
+
+        if (undefined !== e[n]) {
+            for ( i = 0; i < a && m < .6; i++ ) {
+                for ( b = performance.now(), d = 0, undefined; d < 4e3; d++ ) {
+                    var b;
+                    var d;
+                    e[n](3.14);
+                }
+
+                var s = performance.now();
+                o.push(Math.round(1e3 * (s - b)));
+                m = s - r;
+            }
+
+            var k = o.sort();
+            c = k[Math.floor(k.length / 2)] / 5;
+        }
+        t = t + c + ",";
+    }
+}
