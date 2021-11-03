@@ -228,6 +228,21 @@ function deobfuscate(source) {
                     return ne;
                 }
             ));
+        },
+        UnaryExpression(path) {
+            if (path.parent && !t.isReturnStatement(path.parent)) {
+                return;
+            }
+            if (path.node.operator !== 'void') {
+                return;
+            }
+            if (!t.isAssignmentExpression(path.node.argument)) {
+                return;
+            }
+            path.parentPath.replaceWithMultiple([
+                path.node.argument,
+                t.returnStatement()
+            ]);
         }
     });
 

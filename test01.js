@@ -10,6 +10,7 @@ async function _main() {
     let source = data.toString('utf8');
     const ast = parser.parse(source);
     traverse(ast, {
+        // return 1, 2, 3
         SequenceExpression(path) {
             if (path.parent && !t.isReturnStatement(path.parent)) {
                 return;
@@ -24,6 +25,22 @@ async function _main() {
                     return ne;
                 }
             ));
+        },
+        // return void (bmak.mr = "undef");
+        UnaryExpression(path) {
+            if (path.parent && !t.isReturnStatement(path.parent)) {
+                return;
+            }
+            if (path.node.operator !== 'void') {
+                return;
+            }
+            if (!t.isAssignmentExpression(path.node.argument)) {
+                return;
+            }
+            path.parentPath.replaceWithMultiple([
+                path.node.argument,
+                t.returnStatement()
+            ]);
         }
     });
 

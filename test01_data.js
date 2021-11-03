@@ -18,3 +18,9 @@ function printTips() {
     return 1, 2, 3
 }
 
+function case2() {
+    if ("undefined" == typeof performance ||
+        undefined === performance.now ||
+        "undefined" == typeof JSON)
+        return void (bmak.mr = "undef");
+}
