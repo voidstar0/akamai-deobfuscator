@@ -1,5 +1,7 @@
 # akamai-deobfuscator
 
+## This project is now in an archived state and will not be receiving updates. 
+
 A tool to help you to recover function and property names to better reverse-engineer Akamai scripts.
 
 #### Before Deobfuscation
