@@ -14,7 +14,7 @@
     "@babel/parser": "^7.7.4",
     "@babel/traverse": "^7.7.4",
     "@babel/types": "^7.7.4",
-    "axios": "^0.21.2",
+    "axios": "^1.6.0",
     "esm": "^3.2.25",
     "js-beautify": "^1.10.2"
   }
